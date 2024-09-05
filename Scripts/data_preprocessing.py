@@ -13,9 +13,23 @@ warnings.filterwarnings("ignore", category=ConvergenceWarning)
 # Loading the Dataset
 data = pd.read_csv('../data/raw/boxing_matches.csv')
 print("Null values per column")
-print(data.isnull().sum())
+print(data.isnull().sum().to_string())  # Convert the Series to a string to avoid dtype output
 
-# Removing judge columns (discussed on documentation)
+# Count rows where `decision` is equal to 'NWS'
+nws_count = data[data['decision'] == 'NWS'].shape[0]
+print(f"Number of rows with result 'NWS': {nws_count}")
+
+# Remove rows where `decision` is equal to 'NWS'
+data = data[data['decision'] != 'NWS']
+
+# Count rows where `result` is 'draw' and any decision is present
+draw_decision_count = data[(data['result'] == 'draw') & (data['decision'].notnull())].shape[0]
+print(f"Number of rows with result 'draw' and a decision: {draw_decision_count}")
+
+# Remove rows where `result` is 'draw' and any decision is present
+data = data[~((data['result'] == 'draw') & (data['decision'].notnull()))]
+
+# Removing judge columns (discussed in documentation)
 cols_to_drop = ['judge1_A', 'judge1_B', 'judge2_A', 'judge2_B', 'judge3_A', 'judge3_B']
 data = data.drop(columns=cols_to_drop)
 
@@ -58,8 +72,7 @@ def compare_correlations(original_data, imputed_data, columns, method_name):
 
     # Calculate the similarity percentage
     similarity = np.corrcoef(original_corr.values.flatten(), imputed_corr.values.flatten())[0, 1] * 100
-    print(
-        f"Similarity percentage between correlations before and after imputation ({method_name}): {similarity:.2f}%")
+    print(f"Similarity percentage between correlations before and after imputation ({method_name}): {similarity:.2f}%")
 
     plt.figure(figsize=(14, 7))
 
@@ -81,6 +94,8 @@ def compare_correlations(original_data, imputed_data, columns, method_name):
 compare_correlations(data_before_imputation, data_mice, important_cols + categorical_cols, 'MICE + Mode Imputation')
 
 # Count the null values per column
-null_counts = data_mice.isnull().sum()
+null_counts = data_mice.isnull().sum().to_string()
 print("\nNull values per column after imputation:")
 print(null_counts)
+print("\nValues after imputation:")
+print(data_mice.count().to_string())
