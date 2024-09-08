@@ -143,3 +143,28 @@ plt.show()
 
 # Compare correlation matrices before and after Winsorization
 compare_correlations(data_before_imputation, data_winsorized, important_cols, "Data Winsorized")
+
+# Create new features
+data_encoded['experience_A'] = data_encoded['won_A'] + data_encoded['lost_A'] + data_encoded['drawn_A']
+data_encoded['experience_B'] = data_encoded['won_B'] + data_encoded['lost_B'] + data_encoded['drawn_B']
+data_encoded['win_percentage_A'] = data_encoded['won_A'] / data_encoded['experience_A']
+data_encoded['win_percentage_B'] = data_encoded['won_B'] / data_encoded['experience_B']
+data_encoded['ko_percentage_A'] = data_encoded['kos_A'] / data_encoded['won_A']
+data_encoded['ko_percentage_B'] = data_encoded['kos_B'] / data_encoded['won_B']
+
+# Replace NaN values with 0
+data_encoded['experience_A'] = data_encoded['won_A'] + data_encoded['lost_A'] + data_encoded['drawn_A'].fillna(0)
+data_encoded['experience_B'] = data_encoded['won_B'] + data_encoded['lost_B'] + data_encoded['drawn_B'].fillna(0)
+data_encoded['win_percentage_A'] = data_encoded['win_percentage_A'].fillna(0)
+data_encoded['win_percentage_B'] = data_encoded['win_percentage_B'].fillna(0)
+data_encoded['ko_percentage_A'] = data_encoded['ko_percentage_A'].fillna(0)
+data_encoded['ko_percentage_B'] = data_encoded['ko_percentage_B'].fillna(0)
+
+# Calculate the correlation matrix for the new features
+new_features_corr = data_encoded[['experience_A', 'experience_B', 'win_percentage_A', 'win_percentage_B', 'ko_percentage_A', 'ko_percentage_B']].corr()
+
+# Visualize the correlation matrix
+plt.figure(figsize=(8, 6))
+sns.heatmap(new_features_corr, annot=True, cmap='coolwarm', vmin=-1, vmax=1)
+plt.title('Correlation Matrix of New Features')
+plt.show()
