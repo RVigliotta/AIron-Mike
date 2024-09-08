@@ -99,3 +99,47 @@ print("\nNull values per column after imputation:")
 print(null_counts)
 print("\nValues after imputation:")
 print(data_mice.count().to_string())
+
+print(f"Number of columns before One-Hot Encoding: {data_mice.shape[1]}")
+
+# Apply One-Hot Encoding
+data_encoded = pd.get_dummies(data_mice, columns=['stance_A', 'stance_B', 'result', 'decision'])
+
+data_encoded = data_encoded.astype(int)
+
+# Visualize the first few rows and the new columns after One-Hot Encoding
+print(data_encoded.head())
+
+# Check how many columns we now have after encoding
+print(f"Number of columns after One-Hot Encoding: {data_encoded.shape[1]}")
+print("New columns after encoding:")
+print(data_encoded.columns)
+
+
+# Function to handle outliers using Winsorization
+def handle_outliers_winsorize(df, columns, lower_quantile=0.01, upper_quantile=0.99):
+    df_cleaned = df.copy()
+    for column in columns:
+        lower_bound = df_cleaned[column].quantile(lower_quantile)
+        upper_bound = df_cleaned[column].quantile(upper_quantile)
+        df_cleaned[column] = np.clip(df_cleaned[column], lower_bound, upper_bound)
+    return df_cleaned
+
+
+# Columns to handle outliers
+numeric_columns = ['age_A', 'age_B', 'height_A', 'height_B', 'reach_A', 'reach_B', 'weight_A', 'weight_B', 'won_A',
+                   'won_B', 'lost_A', 'lost_B', 'drawn_A', 'drawn_B', 'kos_A', 'kos_B']
+
+# Handle outliers using Winsorization
+data_winsorized = handle_outliers_winsorize(data_mice, numeric_columns, lower_quantile=0.01, upper_quantile=0.99)
+print(f"Number of rows after handling outliers (Winsorization): {data_winsorized.shape[0]}")
+
+# Plot the distribution of numerical variables after Winsorization
+plt.figure(figsize=(16, 10))
+sns.violinplot(data=data_winsorized, inner="quartile", palette="muted")
+plt.title('Distribution of Numerical Variables After Winsorization')
+plt.xticks(rotation=45)
+plt.show()
+
+# Compare correlation matrices before and after Winsorization
+compare_correlations(data_before_imputation, data_winsorized, important_cols, "Data Winsorized")
