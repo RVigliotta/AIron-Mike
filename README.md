@@ -21,7 +21,6 @@
   + [Project Goal](#Project-Goal-)
 * [Features](#features-)
 * [Technologies used](#Technologies-used-)
-* [Utilizzo](#utilizzo-)
 * [Project Status](#project-status-)
 
 
