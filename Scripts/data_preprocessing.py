@@ -64,8 +64,8 @@ data = data[data['decision'] != 'NWS']
 draw_decision_count = data[(data['result'] == 'draw') & (data['decision'].notnull())].shape[0]
 print(f"Number of rows with result 'draw' and a decision: {draw_decision_count}")
 
-# Remove rows where `result` is 'draw' and any decision is present
-data = data[~((data['result'] == 'draw') & (data['decision'].notnull()))]
+# Set `decision` to an empty string where `result` is 'draw' and there is a decision
+data.loc[(data['result'] == 'draw') & (data['decision'].notnull()), 'decision'] = 'draw'
 
 # Removing judge columns (discussed in documentation)
 cols_to_drop = ['judge1_A', 'judge1_B', 'judge2_A', 'judge2_B', 'judge3_A', 'judge3_B']
@@ -103,6 +103,10 @@ print("\nValues after imputation:")
 print(data_mice.count().to_string())
 
 print(f"Number of columns before One-Hot Encoding: {data_mice.shape[1]}")
+
+# Check unique values in the 'result' column
+print("Unique values in 'result' column before encoding:")
+print(data_mice['result'].unique())
 
 # Apply One-Hot Encoding
 data_encoded = pd.get_dummies(data_mice, columns=['stance_A', 'stance_B', 'result', 'decision'])
