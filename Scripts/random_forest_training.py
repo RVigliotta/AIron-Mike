@@ -1,14 +1,13 @@
 import pandas as pd
-import seaborn as sns
 import numpy as np
 from imblearn.over_sampling import SMOTE
-from matplotlib import pyplot as plt
 from sklearn.ensemble import IsolationForest
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import cross_val_score, KFold
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
 
 
 # Replace infinities and NaN with the column mean
@@ -70,39 +69,60 @@ val_X_preprocessed = pd.DataFrame(val_X_preprocessed,
 test_X_preprocessed = pd.DataFrame(test_X_preprocessed,
                                    columns=[f'PC{i + 1}' for i in range(test_X_preprocessed.shape[1])])
 
-# Visualize the scaled data to verify the result
-fig, axes = plt.subplots(3, 2, figsize=(15, 15))
+# Phase 1: Match result prediction
+result_cols = ['result_win_A', 'result_win_B', 'result_draw']
+print("Columns in train_X:", train_X.columns.tolist())
+print("Columns in train_y:", train_y.columns.tolist())
 
-sns.histplot(train_X, ax=axes[0, 0], kde=True, legend=False)
-axes[0, 0].set_title('Original Distribution - Train')
-sns.histplot(train_X_preprocessed, ax=axes[0, 1], kde=True, legend=False)
-axes[0, 1].set_title('Preprocessed Distribution - Train')
+# Ensure the columns exist in the DataFrame
+result_cols_in_X = [col for col in result_cols if col in train_X.columns]
+decision_cols_in_X = [col for col in train_y.columns if col not in result_cols and col in train_X.columns]
 
-sns.histplot(val_X, ax=axes[1, 0], kde=True, legend=False)
-axes[1, 0].set_title('Original Distribution - Validation')
-sns.histplot(val_X_preprocessed, ax=axes[1, 1], kde=True, legend=False)
-axes[1, 1].set_title('Preprocessed Distribution - Validation')
+X_result = train_X.drop(columns=result_cols_in_X + decision_cols_in_X)
+y_result = train_y[result_cols]
 
-sns.histplot(test_X, ax=axes[2, 0], kde=True, legend=False)
-axes[2, 0].set_title('Original Distribution - Test')
-sns.histplot(test_X_preprocessed, ax=axes[2, 1], kde=True, legend=False)
-axes[2, 1].set_title('Preprocessed Distribution - Test')
+# Combine target columns into a single column for stratification
+y_result_combined = y_result.idxmax(axis=1)
 
-plt.tight_layout()
-plt.show()
+# Data split with stratification
+X_train_result, X_test_result, y_train_result, y_test_result = train_test_split(X_result, y_result,
+                                                                                test_size=0.2, random_state=42,
+                                                                                stratify=y_result_combined)
 
-# Define the Random Forest model
-rf_model = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
+# Model training
+rf_model_result = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
+rf_model_result.fit(X_train_result, y_train_result)
 
-# Configure k-fold cross-validation
-kfold = KFold(n_splits=5, shuffle=True, random_state=42)
+# Model evaluation for the first phase (result prediction)
+y_pred_result = rf_model_result.predict(X_test_result)
+print("Phase 1: Match Result Prediction")
+print(classification_report(y_test_result, y_pred_result, zero_division=0))
 
-# Perform cross-validation
-cv_results_preprocessed = cross_val_score(rf_model, train_X_preprocessed, train_y_resampled, cv=kfold,
-                                          scoring='accuracy')
+# Phase 2: Decision type prediction for non-draw matches
+decision_cols = [col for col in train_y.columns if col not in result_cols and col != 'decision_draw']
+y_decision = train_y[decision_cols]
 
-# Print cross-validation results for the preprocessed model
-print(f"Preprocessed Data")
-print(f"Cross-Validation Scores: {cv_results_preprocessed}")
-print(f"Mean Accuracy: {cv_results_preprocessed.mean()}")
-print(f"Standard Deviation: {cv_results_preprocessed.std()}")
+# Filter data for non-draw matches in the training set
+non_draw_indices_train = y_train_result.idxmax(axis=1) != 'result_draw'
+X_train_decision = X_train_result[non_draw_indices_train].copy()
+y_train_decision = y_decision.loc[X_train_decision.index]
+
+# Filter data for non-draw matches in the test set
+non_draw_indices_test = y_test_result.idxmax(axis=1) != 'result_draw'
+X_test_decision = X_test_result[non_draw_indices_test].copy()
+y_test_decision_filtered = y_decision.loc[X_test_decision.index]
+
+# Model training
+rf_model_decision = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
+rf_model_decision.fit(X_train_decision, y_train_decision)
+
+# Decision type prediction
+y_pred_decision = rf_model_decision.predict(X_test_decision)
+
+# Convert y_pred_decision to DataFrame with the same columns as y_test_decision_filtered
+y_pred_decision_df = pd.DataFrame(y_pred_decision, columns=y_test_decision_filtered.columns,
+                                  index=y_test_decision_filtered.index)
+
+# Model evaluation for the second phase (decision type)
+print("Phase 2: Decision Type Prediction")
+print(classification_report(y_test_decision_filtered, y_pred_decision_df, zero_division=0))
