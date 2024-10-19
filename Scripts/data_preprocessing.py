@@ -67,6 +67,9 @@ print(f"Number of rows with result 'draw' and a decision: {draw_decision_count}"
 # Set `decision` to an empty string where `result` is 'draw' and there is a decision
 data.loc[(data['result'] == 'draw') & (data['decision'].notnull()), 'decision'] = 'draw'
 
+# Stampa tutte le colonne del DataFrame
+print(data.columns)
+
 # Removing judge columns (discussed in documentation)
 cols_to_drop = ['judge1_A', 'judge1_B', 'judge2_A', 'judge2_B', 'judge3_A', 'judge3_B']
 data = data.drop(columns=cols_to_drop)
@@ -107,6 +110,9 @@ print(f"Number of columns before One-Hot Encoding: {data_mice.shape[1]}")
 # Check unique values in the 'result' column
 print("Unique values in 'result' column before encoding:")
 print(data_mice['result'].unique())
+
+# Set `decision` to 'draw' where `result` is 'draw'
+data_mice.loc[data_mice['result'] == 'draw', 'decision'] = 'draw'
 
 # Apply One-Hot Encoding
 data_encoded = pd.get_dummies(data_mice, columns=['stance_A', 'stance_B', 'result', 'decision'])
@@ -173,6 +179,9 @@ plt.show()
 # Save the final dataset to a CSV file
 output_path = '../data/processed/boxing_matches_processed.csv'
 data_winsorized.to_csv(output_path, index=False)
+
+# Stampa tutte le colonne del DataFrame
+print(data.columns)
 
 # Check if the file was saved successfully
 if os.path.exists(output_path):
