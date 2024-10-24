@@ -35,19 +35,19 @@ missing_cols = [col for col in target_cols if col not in df.columns]
 if missing_cols:
     raise KeyError(f"Columns {missing_cols} not found in DataFrame")
 
-X = df.drop(columns=target_cols)  # These are the features
+x = df.drop(columns=target_cols)  # These are the features
 y = df[target_cols]  # These are the targets
 
 # Split the dataset into training and test sets (80% training, 20% test)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
 
 # Split the training set into training and validation sets (80% training, 20% validation)
-X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
+x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, test_size=0.2, random_state=42)
 
 # Check the dimensions to verify the correct split
-print(f"Training set: {X_train.shape}, {y_train.shape}")
-print(f"Validation set: {X_val.shape}, {y_val.shape}")
-print(f"Test set: {X_test.shape}, {y_test.shape}")
+print(f"Training set: {x_train.shape}, {y_train.shape}")
+print(f"Validation set: {x_val.shape}, {y_val.shape}")
+print(f"Test set: {x_test.shape}, {y_test.shape}")
 
 # Save the split datasets to a preprocessed folder
 # Define the path to save the files (modify with your folder path)
@@ -57,11 +57,11 @@ output_folder = '../data/splitted/'
 os.makedirs(output_folder, exist_ok=True)
 
 # Save the datasets as CSV
-save_dataset(X_train, os.path.join(output_folder, 'X_train.csv'))
+save_dataset(x_train, os.path.join(output_folder, 'x_train.csv'))
 save_dataset(y_train, os.path.join(output_folder, 'y_train.csv'))
-save_dataset(X_val, os.path.join(output_folder, 'X_val.csv'))
+save_dataset(x_val, os.path.join(output_folder, 'x_val.csv'))
 save_dataset(y_val, os.path.join(output_folder, 'y_val.csv'))
-save_dataset(X_test, os.path.join(output_folder, 'X_test.csv'))
+save_dataset(x_test, os.path.join(output_folder, 'x_test.csv'))
 save_dataset(y_test, os.path.join(output_folder, 'y_test.csv'))
 
 print("Data saved successfully in the preprocessed folder.")

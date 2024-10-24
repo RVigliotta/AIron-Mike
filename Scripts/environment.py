@@ -3,8 +3,8 @@ import random
 
 
 class ResultEnv:
-    def __init__(self, X_data, y_data, result_actions):
-        self.X_data = X_data
+    def __init__(self, x_data, y_data, result_actions):
+        self.x_data = x_data
         self.y_data = y_data
         self.current_step = 0
         self.done = False
@@ -13,7 +13,7 @@ class ResultEnv:
     def reset(self):
         self.current_step = 0
         self.done = False
-        return self.X_data[self.current_step]
+        return self.x_data[self.current_step]
 
     def step(self, result_action):
         reward = 0
@@ -24,16 +24,16 @@ class ResultEnv:
             reward -= 1
 
         self.current_step += 1
-        if self.current_step >= len(self.X_data):
+        if self.current_step >= len(self.x_data):
             self.done = True
 
-        next_state = self.X_data[self.current_step] if not self.done else None
+        next_state = self.x_data[self.current_step] if not self.done else None
         return next_state, reward, self.done
 
 
 class DecisionEnv:
-    def __init__(self, X_data, y_data, decision_actions):
-        self.X_data = X_data
+    def __init__(self, x_data, y_data, decision_actions):
+        self.x_data = x_data
         self.y_data = y_data
         self.current_step = 0
         self.done = False
@@ -42,7 +42,7 @@ class DecisionEnv:
     def reset(self):
         self.current_step = 0
         self.done = False
-        return self.X_data[self.current_step]
+        return self.x_data[self.current_step]
 
     def step(self, decision_action):
         reward = 0
@@ -51,9 +51,9 @@ class DecisionEnv:
         else:
             reward -= 1
         self.current_step += 1
-        if self.current_step >= len(self.X_data):
+        if self.current_step >= len(self.x_data):
             self.done = True
-        next_state = self.X_data[self.current_step] if not self.done else None
+        next_state = self.x_data[self.current_step] if not self.done else None
         return next_state, reward, self.done
 
 
@@ -65,7 +65,7 @@ class ResultAgent:
         self.epsilon = epsilon
         self.epsilon_decay = epsilon_decay
         self.epsilon_min = epsilon_min
-        self.q_table = np.zeros((len(env.X_data), len(env.result_actions)))
+        self.q_table = np.zeros((len(env.x_data), len(env.result_actions)))
 
     def choose_action(self, state):
         if np.random.rand() < self.epsilon:
@@ -99,7 +99,7 @@ class DecisionAgent:
         self.epsilon = epsilon
         self.epsilon_decay = epsilon_decay
         self.epsilon_min = epsilon_min
-        self.q_table = np.zeros((len(env.X_data), len(env.decision_actions)))
+        self.q_table = np.zeros((len(env.x_data), len(env.decision_actions)))
 
     def choose_action(self, state, result_action):
         if result_action == 'result_draw':

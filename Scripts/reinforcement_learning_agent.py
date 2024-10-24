@@ -17,18 +17,18 @@ def replace_inf_and_nan(df):
 
 
 def load_and_preprocess_data():
-    train_X = pd.read_csv('../data/splitted/X_train.csv')
+    train_x = pd.read_csv('../data/splitted/x_train.csv')
     train_y = pd.read_csv('../data/splitted/y_train.csv')
-    test_X = pd.read_csv('../data/splitted/X_test.csv')
+    test_x = pd.read_csv('../data/splitted/x_test.csv')
     test_y = pd.read_csv('../data/splitted/y_test.csv')
-    val_X = pd.read_csv('../data/splitted/X_val.csv')
+    val_x = pd.read_csv('../data/splitted/x_val.csv')
     val_y = pd.read_csv('../data/splitted/y_val.csv')
-    for df in [train_X, val_X, test_X]:
+    for df in [train_x, val_x, test_x]:
         replace_inf_and_nan(df)
     scaler = StandardScaler()
-    train_X = scaler.fit_transform(train_X)
-    val_X = scaler.transform(val_X)
-    test_X = scaler.transform(test_X)
+    train_x = scaler.fit_transform(train_x)
+    val_x = scaler.transform(val_x)
+    test_x = scaler.transform(test_x)
     result_actions = ['result_win_A', 'result_win_B', 'result_draw']
     decision_actions = [col for col in train_y.columns if col not in result_actions]
     train_y_result = train_y[result_actions]
@@ -37,7 +37,7 @@ def load_and_preprocess_data():
     train_y_decision = train_y[decision_actions]
     test_y_decision = test_y[decision_actions]
     val_y_decision = val_y[decision_actions]
-    return train_X, train_y_result, test_X, test_y_result, val_X, val_y_result, train_y_decision, test_y_decision, val_y_decision
+    return train_x, train_y_result, test_x, test_y_result, val_x, val_y_result, train_y_decision, test_y_decision, val_y_decision
 
 
 def train_agent(env, agent, num_episodes, result_agent=None):
@@ -78,9 +78,9 @@ def load_model_zip(filename):
             return pickle.load(f)
 
 
-def evaluate_model(agent, test_X, test_y, actions, result_agent=None):
+def evaluate_model(agent, test_x, test_y, actions, result_agent=None):
     predicted_labels = []
-    for state in test_X:
+    for state in test_x:
         if isinstance(agent, DecisionAgent) and result_agent:
             result_action = result_agent.choose_action(state)
             action = agent.choose_action(state, result_action)
@@ -109,29 +109,29 @@ def evaluate_model(agent, test_X, test_y, actions, result_agent=None):
 
 
 def main():
-    train_X, train_y_result, test_X, test_y_result, val_X, val_y_result, train_y_decision, test_y_decision, val_y_decision = load_and_preprocess_data()
+    train_x, train_y_result, test_x, test_y_result, val_x, val_y_result, train_y_decision, test_y_decision, val_y_decision = load_and_preprocess_data()
 
     result_actions = ['result_win_A', 'result_win_B', 'result_draw']
     decision_actions = [col for col in train_y_decision.columns]
 
     # Training the Result Agent
-    result_env = ResultEnv(train_X, train_y_result, result_actions)
+    result_env = ResultEnv(train_x, train_y_result, result_actions)
     result_agent = ResultAgent(result_env)
-    train_agent(result_env, result_agent, 10)  # Increase the number of episodes for more complete training
+    train_agent(result_env, result_agent, 10)
     save_model_zip(result_agent, 'result_agent_model.pkl')
 
     # Evaluation of the Result Agent
-    evaluate_model(result_agent, test_X, test_y_result, result_actions)
+    evaluate_model(result_agent, test_x, test_y_result, result_actions)
 
     # Generate predictions from the Result Agent for the training set
     predicted_train_results = []
-    for state in train_X:
+    for state in train_x:
         result_action = result_agent.choose_action(state)
         predicted_train_results.append(result_action)
 
     # Use the predictions of the Result Agent as input for the Decision Agent
-    train_X_decision = np.concatenate((train_X, np.array(predicted_train_results).reshape(-1, 1)), axis=1)
-    decision_env = DecisionEnv(train_X_decision, train_y_decision, decision_actions)
+    train_x_decision = np.concatenate((train_x, np.array(predicted_train_results).reshape(-1, 1)), axis=1)
+    decision_env = DecisionEnv(train_x_decision, train_y_decision, decision_actions)
     decision_agent = DecisionAgent(decision_env)
 
     # Training the Decision Agent
@@ -140,13 +140,13 @@ def main():
 
     # Evaluation of the Decision Agent
     predicted_test_results = []
-    for state in test_X:
+    for state in test_x:
         result_action = result_agent.choose_action(state)
         predicted_test_results.append(result_action)
-    test_X_decision = np.concatenate((test_X, np.array(predicted_test_results).reshape(-1, 1)), axis=1)
-    decision_env.X_data = test_X_decision
+    test_x_decision = np.concatenate((test_x, np.array(predicted_test_results).reshape(-1, 1)), axis=1)
+    decision_env.X_data = test_x_decision
 
-    evaluate_model(decision_agent, test_X_decision, test_y_decision, decision_actions, result_agent)
+    evaluate_model(decision_agent, test_x_decision, test_y_decision, decision_actions, result_agent)
 
 
 if __name__ == "__main__":
