@@ -118,7 +118,7 @@ def main():
     result_env = ResultEnv(train_x, train_y_result, result_actions)
     result_agent = ResultAgent(result_env)
     train_agent(result_env, result_agent, 10)
-    save_model_zip(result_agent, 'result_agent_model.pkl')
+    save_model_zip(result_agent, 'agent_model_result.pkl')
 
     # Evaluation of the Result Agent
     evaluate_model(result_agent, test_x, test_y_result, result_actions)
@@ -136,7 +136,7 @@ def main():
 
     # Training the Decision Agent
     train_agent(decision_env, decision_agent, 20, result_agent)
-    save_model_zip(decision_agent, 'decision_agent_model.pkl')
+    save_model_zip(decision_agent, 'agent_model_decision.pkl')
 
     # Evaluation of the Decision Agent
     predicted_test_results = []

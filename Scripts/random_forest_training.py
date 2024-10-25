@@ -1,13 +1,17 @@
+import os
+
 import pandas as pd
 import numpy as np
-from imblearn.over_sampling import SMOTE
-from sklearn.ensemble import IsolationForest
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
+import zipfile
+import pickle
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from imblearn.over_sampling import SMOTE
+from sklearn.pipeline import Pipeline
+from sklearn.decomposition import PCA
+from sklearn.ensemble import IsolationForest
 
 
 # Replace infinities and NaN with the column mean
@@ -15,6 +19,15 @@ def replace_inf_and_nan(df):
     df.replace([np.inf, -np.inf], np.nan, inplace=True)
     df.fillna(df.mean(), inplace=True)
     return df
+
+
+def save_model_zip(agent, filename):
+    directory = '../models'
+    os.makedirs(directory, exist_ok=True)
+    filepath = os.path.join(directory, filename)
+    with zipfile.ZipFile(filepath + '.zip', 'w', zipfile.ZIP_DEFLATED) as zipf:
+        with zipf.open(filename, 'w') as f:
+            pickle.dump(agent, f)
 
 
 # Load preprocessed and split datasets
@@ -25,6 +38,7 @@ test_y = pd.read_csv('../data/splitted/y_test.csv')
 val_x = pd.read_csv('../data/splitted/x_val.csv')
 val_y = pd.read_csv('../data/splitted/y_val.csv')
 
+# Print initial dimensions
 print(f"Initial train_x dimensions: {train_x.shape}")
 print(f"Initial train_y dimensions: {train_y.shape}")
 
@@ -56,7 +70,6 @@ preprocessing_pipeline = Pipeline([
     ('scaler', StandardScaler()),
     ('pca', PCA(n_components=0.95))
 ])
-
 train_x_preprocessed = preprocessing_pipeline.fit_transform(train_x_resampled)
 val_x_preprocessed = preprocessing_pipeline.transform(val_x)
 test_x_preprocessed = preprocessing_pipeline.transform(test_x)
@@ -77,7 +90,6 @@ print("Columns in train_y:", train_y.columns.tolist())
 # Ensure the columns exist in the DataFrame
 result_cols_in_x = [col for col in result_cols if col in train_x.columns]
 decision_cols_in_x = [col for col in train_y.columns if col not in result_cols and col in train_x.columns]
-
 x_result = train_x.drop(columns=result_cols_in_x + decision_cols_in_x)
 y_result = train_y[result_cols]
 
@@ -97,6 +109,9 @@ rf_model_result.fit(x_train_result, y_train_result)
 y_pred_result = rf_model_result.predict(x_test_result)
 print("Phase 1: Match Result Prediction")
 print(classification_report(y_test_result, y_pred_result, zero_division=0))
+
+# Save the result model in zip format
+save_model_zip(rf_model_result, 'rf_model_result.pkl')
 
 # Phase 2: Decision type prediction for non-draw matches
 decision_cols = [col for col in train_y.columns if col not in result_cols and col != 'decision_draw']
@@ -126,3 +141,6 @@ y_pred_decision_df = pd.DataFrame(y_pred_decision, columns=y_test_decision_filte
 # Model evaluation for the second phase (decision type)
 print("Phase 2: Decision Type Prediction")
 print(classification_report(y_test_decision_filtered, y_pred_decision_df, zero_division=0))
+
+# Save the decision model in zip format
+save_model_zip(rf_model_decision, 'rf_model_decision.pkl')

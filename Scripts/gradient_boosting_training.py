@@ -1,12 +1,16 @@
+import os
 import pandas as pd
 import numpy as np
-from imblearn.over_sampling import SMOTE
-from sklearn.ensemble import IsolationForest, GradientBoostingClassifier
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import train_test_split
+import zipfile
+import pickle
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import classification_report
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from imblearn.over_sampling import SMOTE
+from sklearn.pipeline import Pipeline
+from sklearn.decomposition import PCA
+from sklearn.ensemble import IsolationForest
 from joblib import Parallel, delayed
 
 
@@ -20,6 +24,15 @@ def replace_inf_and_nan(df):
 # Function to load a CSV file
 def load_csv(file_path):
     return pd.read_csv(file_path)
+
+
+def save_model_zip(agent, filename):
+    directory = '../models'
+    os.makedirs(directory, exist_ok=True)
+    filepath = os.path.join(directory, filename)
+    with zipfile.ZipFile(filepath + '.zip', 'w', zipfile.ZIP_DEFLATED) as zipf:
+        with zipf.open(filename, 'w') as f:
+            pickle.dump(agent, f)
 
 
 # Parallel loading of preprocessed and split datasets
@@ -47,7 +60,6 @@ yhat = iso.fit_predict(train_x)
 mask = yhat != -1
 train_x_no_outliers = train_x[mask]
 train_y_no_outliers = train_y[mask]
-
 print(f"train_x dimensions without outliers: {train_x_no_outliers.shape}")
 print(f"train_y dimensions without outliers: {train_y_no_outliers.shape}")
 
@@ -82,7 +94,6 @@ test_x_preprocessed = pd.DataFrame(test_x_preprocessed,
 result_cols = ['result_win_A', 'result_win_B', 'result_draw']
 result_cols_in_x = [col for col in result_cols if col in train_x.columns]
 decision_cols_in_x = [col for col in train_y.columns if col not in result_cols and col in train_x.columns]
-
 x_result = train_x.drop(columns=result_cols_in_x + decision_cols_in_x)
 y_result = train_y[result_cols]
 
@@ -137,3 +148,7 @@ y_pred_decision = gb_model_decision.predict(x_test_decision)
 # Model evaluation (Phase 2: Decision type prediction)
 print("Phase 2: Decision Type Prediction")
 print(classification_report(y_test_decision_filtered, y_pred_decision, zero_division=0))
+
+# Save the models in the ../models directory as zip
+save_model_zip(gb_model_result, 'gb_model_result.pkl')
+save_model_zip(gb_model_decision, 'gb_model_decision.pkl')
