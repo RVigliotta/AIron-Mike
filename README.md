@@ -21,6 +21,7 @@
   + [Project Goal](#Project-Goal-)
 * [Features](#features-)
 * [Technologies used](#Technologies-used-)
+* [Improvements](#Improvements-)
 * [Project Status](#project-status-)
 
 
@@ -45,6 +46,10 @@ This project aims to support sports analysts, trainers, and enthusiasts by offer
 - Matplot
 - Scikit - Learn
 - Pandas
+- Pickle
+
+## Improvements
+It is possible to improve the accuracy percentages of the models, improving the data quality and the balance of the various classes of the dataset. In addition, a minimalist graphical interface will be added in the future
 
 ## Project Status
-The Project is: **_In Progress_**. 🚧
+The Project is: **_Complete_**. ✅
